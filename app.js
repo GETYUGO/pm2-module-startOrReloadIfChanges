@@ -23,8 +23,6 @@ const checkMd5 = (apps, currentMd5, md5Path) => {
     return [apps, []];
   }
   const lastMd5 = getFileJson(md5Path);
-  console.log('current md5:', currentMd5);
-  console.log('last md5', lastMd5);
   const [olds, news] = arrayDiff(
     Object.keys(lastMd5),
     Object.keys(currentMd5),
@@ -107,16 +105,11 @@ pmx.initModule({
 
       const [toRestart, toStop] = checkMd5(ecosystem.apps, currentMd5, md5Path);
 
-      console.log('ToRestart:', toRestart);
-      console.log('ToStop:', toStop);
-
       await managePM2Processes(toRestart, toStop, param);
 
       putFileContent(md5Path, JSON.stringify(currentMd5));
       putFileContent(`${param}/${conf.to_restart_file}`, JSON.stringify(toRestart));
       putFileContent(`${param}/${conf.to_stop_file}`, JSON.stringify(toRestart));
-
-      console.log('\n\nEND\n\n');
 
       return reply(`Start ${toRestart.map(a => a.name).join(', ')}. Stop ${toStop.map(a => a.name).join(', ')}`);
     } catch (e) {
