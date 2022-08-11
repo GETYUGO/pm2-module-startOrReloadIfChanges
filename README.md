@@ -35,7 +35,7 @@ It contains only services to start or restart.
 This file will be store in directory gave on command launch.
 ## to_stop_file
 Name of ecosystem file created by module when finish running.
-It contains only services to start or restart.
+It contains only services to stop.
 (default: `ecosystem.stop.json`)
 
 This file will be store in directory gave on command launch.
