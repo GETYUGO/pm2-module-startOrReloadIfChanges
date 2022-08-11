@@ -1,7 +1,7 @@
 {
   "name": "startOrReloadIfChanges",
-  "version": "0.0.1",
-  "description": "PM2 Sample Module",
+  "version": "1.0.0",
+  "description": "PM2 Module for restart proccesses that have changed",
   "main": "app.js",
   "dependencies": {
     "md5": "^2.3.0",
@@ -25,6 +25,5 @@
       "script": "app.js"
     }
   ],
-  "author": "Keymetrics Inc.",
-  "license": "MIT"
+  "author": "Alexis \"Enchiladas\" Craye"
 }
