@@ -1,0 +1,30 @@
+{
+  "name": "startOrReloadIfChanges",
+  "version": "0.0.1",
+  "description": "PM2 Sample Module",
+  "main": "app.js",
+  "dependencies": {
+    "md5": "^2.3.0",
+    "pm2": "^5.2.0",
+    "pmx": "beta"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/keymetrics/pmx.git"
+  },
+  "config": {
+    "services_md5_file": "services_md5.json",
+    "ecosystem_file": "ecosystem.config.json",
+    "to_restart_file": "ecosystem.restart.json",
+    "to_stop_file": "ecosystem.stop.json"
+  },
+  "apps": [
+    {
+      "merge_logs": true,
+      "max_memory_restart": "200M",
+      "script": "app.js"
+    }
+  ],
+  "author": "Keymetrics Inc.",
+  "license": "MIT"
+}
