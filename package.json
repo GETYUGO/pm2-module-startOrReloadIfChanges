@@ -1,6 +1,6 @@
 {
   "name": "startOrReloadIfChanges",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "PM2 Module for restart proccesses that have changed",
   "main": "app.js",
   "dependencies": {

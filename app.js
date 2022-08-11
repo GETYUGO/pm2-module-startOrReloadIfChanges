@@ -109,7 +109,7 @@ pmx.initModule({
 
       putFileContent(md5Path, JSON.stringify(currentMd5));
       putFileContent(`${param}/${conf.to_restart_file}`, JSON.stringify(toRestart));
-      putFileContent(`${param}/${conf.to_stop_file}`, JSON.stringify(toRestart));
+      putFileContent(`${param}/${conf.to_stop_file}`, JSON.stringify(toStop));
 
       return reply(`Start ${toRestart.map(a => a.name).join(', ')}. Stop ${toStop.map(a => a.name).join(', ')}`);
     } catch (e) {
