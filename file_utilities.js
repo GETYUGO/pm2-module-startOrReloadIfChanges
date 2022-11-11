@@ -15,15 +15,16 @@ const getFileBasePath = (filePath) => {
 
 const toFilename = (requireEntry) => requireEntry.endsWith('.js') ? requireEntry : requireEntry + '.js';
 
-const parseRequires = (fileContent) => fileContent.split('\n').reduce((prev, line) => {
-  const re = /(?:require\('?"?)(.*?)(?:'?"?\))/;
-  const matches = re.exec(line);
+const parseRequires = (fileContent) => {
+  const re = /(?:require\('?"?)(.*?)(?:'?"?\))/gm;
+  const requirements = [];
+  let matches;
 
-  if (matches) {
-    return [...prev, matches[1]];
+  while ((matches = re.exec(fileContent)) !== null) {
+    requirements.push(matches[1]);
   }
-  return prev;
-}, []);
+  return requirements;
+}
 
 const fileExists = (filePath) => fs.existsSync(filePath);
 

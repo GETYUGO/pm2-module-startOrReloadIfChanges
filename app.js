@@ -94,10 +94,11 @@ pmx.initModule({
     }
   }
 }, (err, conf) => {
+  const pm2Path = `${process.env.HOME}/.pm2`
+  const md5Path = `${pm2Path}/${conf.services_md5_file}`;
+
   pmx.action('reloads', async (param, reply) => {
     try {
-      const pm2Path = `${process.env.HOME}/.pm2`
-      const md5Path = `${pm2Path}/${conf.services_md5_file}`;
       const ecosystemPath = `${param}/${conf.ecosystem_file}`
       const ecosystem = JSON.parse(getFileContent(ecosystemPath).replace('module.exports = ', ''));
 
@@ -117,4 +118,20 @@ pmx.initModule({
       return reply('ERROR');
     }
   });
+
+  pmx.action('refresh', async (param, reply) => {
+    try {
+      const ecosystemPath = `${param}/${conf.ecosystem_file}`
+      const ecosystem = JSON.parse(getFileContent(ecosystemPath).replace('module.exports = ', ''));
+
+      const currentMd5 = getCurrentMd5(param, ecosystem.apps);
+
+      putFileContent(md5Path, JSON.stringify(currentMd5));
+
+      return reply(`Refreshed checksums without managing processes`);
+    } catch (e) {
+      console.log(e);
+      return reply('ERROR');
+    }
+  })
 });
