@@ -6,7 +6,8 @@
   "dependencies": {
     "md5": "^2.3.0",
     "pm2": "^5.2.0",
-    "pmx": "beta"
+    "pmx": "beta",
+    "uglify-js": "^3.17.4"
   },
   "repository": {
     "type": "git",
