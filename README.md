@@ -12,7 +12,7 @@ pm2 install .
 ```bash
 pm2 trigger startOrReloadIfChanges reloads [directory_base_path]
 ```
-### Refresh cehcksums:
+### Refresh checksums:
 ```bash
 pm2 trigger startOrReloadIfChanges refresh [directory_base_path]
 ```
