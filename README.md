@@ -8,9 +8,13 @@ cd pm2-module-startOrReloadIfChanges
 pm2 install .
 ```
 # Usage
-Call reload action:
+### Call reload action:
 ```bash
 pm2 trigger startOrReloadIfChanges reloads [directory_base_path]
+```
+### Refresh cehcksums:
+```bash
+pm2 trigger startOrReloadIfChanges refresh [directory_base_path]
 ```
 # Configuration
 Some configuration variables are configurable using command:
