@@ -128,7 +128,7 @@ pmx.initModule({
 
       putFileContent(md5Path, JSON.stringify(currentMd5));
 
-      return reply(`Refreshed checksums without managing processes`);
+      return reply(`Successfully refreshed checksums`);
     } catch (e) {
       console.log(e);
       return reply('ERROR');
