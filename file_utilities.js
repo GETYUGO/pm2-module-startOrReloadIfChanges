@@ -44,8 +44,15 @@ const getModulePackageVersion = (nodeModulesPath, moduleName) => {
   return JSON.parse(packageContent).version;
 }
 
-const getFileAndRequirements = (filePath, nodeModulesPath) => {
+const getFileAndRequirements = (filePath, nodeModulesPath, depth = 0) => {
   const fileContent = getFileContent(filePath);
+
+  if (depth > 10) { // prevent infinite loop
+    console.error('TOO MUCH DEPTH:', filePath);
+    return {
+      [getFileName(filePath)]: uglify.minify(fileContent).code,
+    }
+  }
   const requirements = parseRequires(fileContent);
 
   return requirements.reduce(
