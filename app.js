@@ -60,10 +60,14 @@ const deletePM2Process = (toStop) => new Promise((resolve, reject) => {
 const managePM2Processes = async (toRestart, toStop, cwd = undefined) => {
   await connectToPM2();
   if (toStop.length > 0) {
-    await Promise.all(toStop.map((arg) => deletePM2Process(arg.name)));
+    for (const arg of toStop) {
+      await deletePM2Process(arg.name);
+    }
   }
   if (toRestart.length > 0) {
-    await startPM2Processes(toRestart, cwd);
+    for (const arg of toRestart) {
+      await startPM2Processes(arg, cwd)
+    }
   }
   pm2.disconnect();
 }
