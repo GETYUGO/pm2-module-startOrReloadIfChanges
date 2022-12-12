@@ -1,7 +1,6 @@
 
 const pmx = require('pmx');
 const pm2 = require('pm2');
-const fs = require('fs');
 
 const { fileExists, putFileContent, getFileJson, getFileContent } = require('./file_utilities');
 const { getCurrentMd5 } = require('./md5');
