@@ -13,7 +13,7 @@ const getFileBasePath = (filePath) => {
   return filePath.slice(0, lastIndex + 1);
 }
 
-const toFilename = (requireEntry) => requireEntry.endsWith('.js') ? requireEntry : requireEntry + '.js';
+const toFilename = (requireEntry) => requireEntry.endsWith('.js') || requireEntry.endsWith('.json') ? requireEntry : requireEntry + '.js';
 
 const parseRequires = (fileContent) => {
   const re = /(?:require\('?"?)(.*?)(?:'?"?\))/gm;
