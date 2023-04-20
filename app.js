@@ -103,9 +103,12 @@ pmx.initModule({
   pmx.action('reloads', async (param, reply) => {
     try {
       const ecosystemPath = `${param}/${conf.ecosystem_file}`
-      const ecosystem = JSON.parse(getFileContent(ecosystemPath).replace('module.exports = ', ''));
+      const ecosystem = JSON.parse(getFileContent(ecosystemPath));
+      const requireBlacklist = ecosystem.startOrReloadConfig?.requireBlacklist || [];
 
-      const currentMd5 = getCurrentMd5(param, ecosystem.apps);
+      console.log(requireBlacklist);
+
+      const currentMd5 = getCurrentMd5(param, ecosystem.apps, requireBlacklist);
 
       const [toRestart, toStop] = checkMd5(ecosystem.apps, currentMd5, md5Path);
 
@@ -126,8 +129,9 @@ pmx.initModule({
     try {
       const ecosystemPath = `${param}/${conf.ecosystem_file}`
       const ecosystem = JSON.parse(getFileContent(ecosystemPath).replace('module.exports = ', ''));
+      const requireBlacklist = ecosystem.startOrReloadConfig?.requireBlacklist || [];
 
-      const currentMd5 = getCurrentMd5(param, ecosystem.apps);
+      const currentMd5 = getCurrentMd5(param, ecosystem.apps, requireBlacklist);
 
       putFileContent(md5Path, JSON.stringify(currentMd5));
 

@@ -15,13 +15,16 @@ const getFileBasePath = (filePath) => {
 
 const toFilename = (requireEntry) => requireEntry.endsWith('.js') || requireEntry.endsWith('.json') ? requireEntry : requireEntry + '.js';
 
-const parseRequires = (fileContent) => {
+const parseRequires = (fileContent, blacklist) => {
   const re = /(?:require\('?"?)(.*?)(?:'?"?\))/gm;
   const requirements = [];
   let matches;
 
   while ((matches = re.exec(fileContent)) !== null) {
-    requirements.push(matches[1]);
+    const blacklisted = blacklist.reduce((prev, cur) => (
+      prev || matches[1].endsWith(cur)
+    ), false);
+    blacklisted || requirements.push(matches[1]);
   }
   return requirements;
 }
@@ -44,7 +47,7 @@ const getModulePackageVersion = (nodeModulesPath, moduleName) => {
   return JSON.parse(packageContent).version;
 }
 
-const getFileAndRequirements = (filePath, nodeModulesPath, depth = 0) => {
+const getFileAndRequirements = (filePath, nodeModulesPath, requireBlacklist, depth = 0) => {
   const fileContent = getFileContent(filePath);
 
   if (depth > 10) { // prevent infinite loop
@@ -53,7 +56,7 @@ const getFileAndRequirements = (filePath, nodeModulesPath, depth = 0) => {
       [getFileName(filePath)]: uglify.minify(fileContent).code,
     }
   }
-  const requirements = parseRequires(fileContent);
+  const requirements = parseRequires(fileContent, requireBlacklist);
 
   return requirements.reduce(
     (prev, cur) => {
@@ -73,7 +76,7 @@ const getFileAndRequirements = (filePath, nodeModulesPath, depth = 0) => {
 
       return {
         ...prev,
-        ...getFileAndRequirements(curPath, nodeModulesPath),
+        ...getFileAndRequirements(curPath, nodeModulesPath, requireBlacklist),
       }
 
     },
