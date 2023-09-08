@@ -12,6 +12,9 @@ const getCurrentMd5 = (basePath, apps, requireBlacklist) => apps.reduce((prev, a
   ))),
 }), {});
 
+const toMd5 = md5;
+
 module.exports = {
   getCurrentMd5,
+  toMd5,
 };

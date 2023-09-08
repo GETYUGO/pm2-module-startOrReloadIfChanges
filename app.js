@@ -3,7 +3,7 @@ const pmx = require('pmx');
 const pm2 = require('pm2');
 
 const { fileExists, putFileContent, getFileJson, getFileContent } = require('./file_utilities');
-const { getCurrentMd5 } = require('./md5');
+const { getCurrentMd5, toMd5 } = require('./md5');
 
 const arrayDiff = (arr1, arr2, compareFct) => [
   arr1.filter((elem) => compareFct(elem, arr2)),
@@ -97,16 +97,18 @@ pmx.initModule({
     }
   }
 }, (err, conf) => {
-  const pm2Path = `${process.env.HOME}/.pm2`
-  const md5Path = `${pm2Path}/${conf.services_md5_file}`;
+  const pm2Path = `${process.env.HOME}/.pm2`;
+  const startOrReloadPath = `${pm2Path}/start_or_reload`
+
+  const getMd5Path = (param) => `${startOrReloadPath}/${toMd5(param)}.json`;
+  const getEcosystemPath = (param) => `${param}/${conf.ecosystem_file}`;
 
   pmx.action('reloads', async (param, reply) => {
     try {
-      const ecosystemPath = `${param}/${conf.ecosystem_file}`
+      const md5Path = getMd5Path(param);
+      const ecosystemPath = getEcosystemPath(param);
       const ecosystem = JSON.parse(getFileContent(ecosystemPath));
       const requireBlacklist = ecosystem.startOrReloadConfig?.requireBlacklist || [];
-
-      console.log(requireBlacklist);
 
       const currentMd5 = getCurrentMd5(param, ecosystem.apps, requireBlacklist);
 
@@ -127,7 +129,8 @@ pmx.initModule({
 
   pmx.action('refresh', async (param, reply) => {
     try {
-      const ecosystemPath = `${param}/${conf.ecosystem_file}`
+      const md5Path = getMd5Path(param);
+      const ecosystemPath = getEcosystemPath(param);
       const ecosystem = JSON.parse(getFileContent(ecosystemPath).replace('module.exports = ', ''));
       const requireBlacklist = ecosystem.startOrReloadConfig?.requireBlacklist || [];
 
