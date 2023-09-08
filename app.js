@@ -2,7 +2,7 @@
 const pmx = require('pmx');
 const pm2 = require('pm2');
 
-const { fileExists, putFileContent, getFileJson, getFileContent } = require('./file_utilities');
+const { fileExists, putFileContent, getFileJson, getFileContent, makeFolder } = require('./file_utilities');
 const { getCurrentMd5, toMd5 } = require('./md5');
 
 const arrayDiff = (arr1, arr2, compareFct) => [
@@ -102,6 +102,10 @@ pmx.initModule({
 
   const getMd5Path = (param) => `${startOrReloadPath}/${toMd5(param)}.json`;
   const getEcosystemPath = (param) => `${param}/${conf.ecosystem_file}`;
+
+  if (!fileExists(startOrReloadPath)) {
+    makeFolder(startOrReloadPath);
+  }
 
   pmx.action('reloads', async (param, reply) => {
     try {
