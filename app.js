@@ -72,6 +72,15 @@ const managePM2Processes = async (toRestart, toStop, cwd = undefined) => {
   pm2.disconnect();
 }
 
+const removeAndStartServices = async (services, cwd = undefined) => {
+  await connectToPM2();
+  for (const arg of services) {
+    await deletePM2Process(arg.name);
+    await startPM2Processes(arg, cwd);
+  }
+  pm2.disconnect();
+}
+
 pmx.initModule({
   widget: {
     logo: 'https://app.keymetrics.io/img/logo/keymetrics-300.png',
@@ -118,7 +127,11 @@ pmx.initModule({
 
       const [toRestart, toStop] = checkMd5(ecosystem.apps, currentMd5, md5Path);
 
-      await managePM2Processes(toRestart, toStop, param);
+      if (!fileExists(md5Path)) {
+        await removeAndStartServices(toRestart, param);
+      } else {
+        await managePM2Processes(toRestart, toStop, param);
+      }
 
       putFileContent(md5Path, JSON.stringify(currentMd5));
       putFileContent(`${param}/${conf.to_restart_file}`, JSON.stringify(toRestart));
