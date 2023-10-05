@@ -128,8 +128,10 @@ pmx.initModule({
       const [toRestart, toStop] = checkMd5(ecosystem.apps, currentMd5, md5Path);
 
       if (!fileExists(md5Path)) {
+        console.log('File not exists', md5Path);
         await removeAndStartServices(toRestart, param);
       } else {
+        console.log('File exists', md5Path);
         await managePM2Processes(toRestart, toStop, param);
       }
 
