@@ -57,6 +57,13 @@ const deletePM2Process = (toStop) => new Promise((resolve, reject) => {
   });
 });
 
+const killPM2Process = (toKill) => new Promise((resolve, reject) => {
+  pm2.delete(toKill, (err) => {
+    if (err) reject(err);
+    else resolve();
+  })
+});
+
 const managePM2Processes = async (toRestart, toStop, cwd = undefined) => {
   await connectToPM2();
   if (toStop.length > 0) {
@@ -75,8 +82,11 @@ const managePM2Processes = async (toRestart, toStop, cwd = undefined) => {
 const removeAndStartServices = async (services, cwd = undefined) => {
   await connectToPM2();
   for (const arg of services) {
-    await deletePM2Process(arg.name);
+    console.log('Will kill', arg, cwd);
+    await killPM2Process(arg.name);
+    console.log('Will start');
     await startPM2Processes(arg, cwd);
+    console.log('Finish', arg);
   }
   pm2.disconnect();
 }
