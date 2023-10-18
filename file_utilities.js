@@ -90,10 +90,15 @@ const putFileContent = (filePath, content) => {
   fs.writeFileSync(filePath, content);
 }
 
+const makeFolder = (folderPath) => {
+  fs.mkdirSync(folderPath)
+}
+
 module.exports = {
   fileExists,
   getFileContent,
   getFileJson,
   getFileAndRequirements,
   putFileContent,
+  makeFolder,
 };
