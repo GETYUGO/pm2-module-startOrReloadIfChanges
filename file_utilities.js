@@ -16,13 +16,13 @@ const getFileBasePath = (filePath) => {
 const toFilename = (requireEntry) => requireEntry.endsWith('.js') || requireEntry.endsWith('.json') ? requireEntry : requireEntry + '.js';
 
 const parseRequires = (fileContent, blacklist) => {
-  const re = /(?:require\('?"?)(.*?)(?:'?"?\))/gm;
+  const re = /(?:require\(['"])(.*?)(?:['"]\))/gm;
   const requirements = [];
   let matches;
 
   while ((matches = re.exec(fileContent)) !== null) {
     const blacklisted = blacklist.reduce((prev, cur) => (
-      prev || matches[1].endsWith(cur)
+      prev || cur.startsWith('@') ? matches[1].startsWith(cur) : matches[1].endsWith(cur)
     ), false);
     blacklisted || requirements.push(matches[1]);
   }
@@ -47,6 +47,13 @@ const getModulePackageVersion = (nodeModulesPath, moduleName) => {
   return JSON.parse(packageContent).version;
 }
 
+const getModuleMainPath = (nodeModulesPath, moduleName) => {
+  const modulePath = nodeModulesPath + moduleName + '/';
+  const packageContent = getFileContent(modulePath + 'package.json');
+
+  return modulePath + JSON.parse(packageContent).main;
+};
+
 const getFileAndRequirements = (filePath, nodeModulesPath, requireBlacklist, depth = 0) => {
   const fileContent = getFileContent(filePath);
 
@@ -60,7 +67,12 @@ const getFileAndRequirements = (filePath, nodeModulesPath, requireBlacklist, dep
 
   return requirements.reduce(
     (prev, cur) => {
-      if (!cur.startsWith('.')) {
+      let curPath;
+      if (cur.startsWith('.')) {
+        curPath = getFileBasePath(filePath) + toFilename(cur);
+      } else if (cur.startsWith('@yegows/')) {
+        curPath = getModuleMainPath(nodeModulesPath, cur);
+      } else {
         try {
           const packageVersion = getModulePackageVersion(nodeModulesPath, cur);
 
@@ -72,11 +84,10 @@ const getFileAndRequirements = (filePath, nodeModulesPath, requireBlacklist, dep
           return prev;
         }
       }
-      const curPath = getFileBasePath(filePath) + toFilename(cur);
 
       return {
         ...prev,
-        ...getFileAndRequirements(curPath, nodeModulesPath, requireBlacklist),
+        ...getFileAndRequirements(curPath, nodeModulesPath, requireBlacklist, depth + 1),
       }
 
     },
