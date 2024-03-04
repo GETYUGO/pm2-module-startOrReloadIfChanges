@@ -24,9 +24,10 @@ const parseRequires = (fileContent, blacklist) => {
 
   while ((matches = re.exec(fileContent)) !== null) {
     console.log(matches[1]);
-    const blacklisted = blacklist.reduce((prev, cur) => (
-      prev || cur.startsWith('@') ? matches[1].startsWith(cur) : matches[1].endsWith(cur)
-    ), false);
+    const blacklisted = blacklist.reduce((prev, cur) => {
+      console.log('prev:', prev, 'cur:', cur, 'matches[1]:', matches[1], cur.startsWith('@'), matches[1].startsWith(cur), matches[1].endsWith(cur));
+      return prev || cur.startsWith('@') ? matches[1].startsWith(cur) : matches[1].endsWith(cur)
+    }, false);
     blacklisted || requirements.push(matches[1]);
   }
   return requirements;
