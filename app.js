@@ -44,7 +44,9 @@ const connectToPM2 = () => new Promise((resolve, reject) => {
 });
 
 const startPM2Processes = (toRestart, cwd = undefined) => new Promise((resolve, reject) => {
-  pm2.start(toRestart, { cwd }, (err, apps) => {
+  const { script, ...options } = toRestart;
+
+  pm2.start(script, { cwd, ...options }, (err, apps) => {
     if (err) reject(err);
     else resolve(apps);
   });
@@ -131,11 +133,12 @@ pmx.initModule({
       const md5Path = getMd5Path(param);
       const ecosystemPath = getEcosystemPath(param);
       const ecosystem = JSON.parse(getFileContent(ecosystemPath));
-      const requireBlacklist = ecosystem.startOrReloadConfig?.requireBlacklist || [];
+      const { apps, startOrReloadConfig } = ecosystem;
+      const requireBlacklist = startOrReloadConfig?.requireBlacklist || [];
 
-      const currentMd5 = getCurrentMd5(param, ecosystem.apps, requireBlacklist);
+      const currentMd5 = getCurrentMd5(param, apps, requireBlacklist);
 
-      const [toRestart, toStop] = checkMd5(ecosystem.apps, currentMd5, md5Path);
+      const [toRestart, toStop] = checkMd5(apps, currentMd5, md5Path);
 
       if (!fileExists(md5Path)) {
         console.log('File not exists', md5Path);
