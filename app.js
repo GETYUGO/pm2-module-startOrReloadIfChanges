@@ -44,9 +44,7 @@ const connectToPM2 = () => new Promise((resolve, reject) => {
 });
 
 const startPM2Processes = (toRestart, cwd = undefined) => new Promise((resolve, reject) => {
-  const { script, ...options } = toRestart;
-
-  pm2.start(script, { cwd, ...options }, (err, apps) => {
+  pm2.start({ cwd, ...toRestart }, (err, apps) => {
     if (err) reject(err);
     else resolve(apps);
   });
