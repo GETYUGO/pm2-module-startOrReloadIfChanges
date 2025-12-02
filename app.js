@@ -15,7 +15,7 @@ const arrayDiff = (arr1, arr2, compareFct) => [
  * @param {{script: string, name: string}[]} apps 
  * @param {{[K:string]:string}} currentMd5
  * @param {string} md5Path 
- * @returns {[{script: string, name: string}[], {script: string, name: string}[]]}
+ * @returns {[{script: string, name: string}[], {script: string, name: string}[]], {script: string, name: string}[]}
  */
 const checkMd5 = (apps, currentMd5, md5Path) => {
   if (!fileExists(md5Path)) {
@@ -31,8 +31,9 @@ const checkMd5 = (apps, currentMd5, md5Path) => {
     .filter((key) => !news.includes(key) && currentMd5[key] !== lastMd5[key]);
 
   return [
-    apps.filter((app) => news.includes(app.name) || toReload.includes(app.name)),
+    apps.filter((app) => toReload.includes(app.name)),
     olds.map((key) => ({ name: key, script: '' })),
+    apps.filter((app) => news.includes(app.name)),
   ];
 };
 
@@ -45,6 +46,13 @@ const connectToPM2 = () => new Promise((resolve, reject) => {
 
 const startPM2Processes = (toRestart, cwd = undefined) => new Promise((resolve, reject) => {
   pm2.start({ cwd, ...toRestart }, (err, apps) => {
+    if (err) reject(err);
+    else resolve(apps);
+  });
+});
+
+const restartPM2Processes = (toReload, cwd = undefined) => new Promise((resolve, reject) => {
+  pm2.restart(toReload, { updateEnv: true }, (err, apps) => {
     if (err) reject(err);
     else resolve(apps);
   });
@@ -64,7 +72,7 @@ const killPM2Process = (toKill) => new Promise((resolve, reject) => {
   })
 });
 
-const managePM2Processes = async (toRestart, toStop, cwd = undefined) => {
+const managePM2Processes = async (toRestart, toStop, toStart, cwd = undefined) => {
   await connectToPM2();
   if (toStop.length > 0) {
     for (const arg of toStop) {
@@ -73,20 +81,34 @@ const managePM2Processes = async (toRestart, toStop, cwd = undefined) => {
   }
   if (toRestart.length > 0) {
     for (const arg of toRestart) {
+      await restartPM2Processes(arg.name, cwd)
+    }
+  }
+  if (toStart.length > 0) {
+    for (const arg of toStart) {
       await startPM2Processes(arg, cwd)
     }
   }
   pm2.disconnect();
 }
 
-const removeAndStartServices = async (services, cwd = undefined) => {
+const removeAndStartServices = async (toRestart, toStop, toStart, cwd = undefined) => {
   await connectToPM2();
-  for (const arg of services) {
+  for (const arg of toStop) {
+    console.log('Will stop', arg, cwd);
+    await deletePM2Process(arg.name).catch(() => { });
+  }
+  for (const arg of toRestart) {
     console.log('Will kill', arg, cwd);
     await killPM2Process(arg.name).catch(() => { });
     console.log('Will start');
     await startPM2Processes(arg, cwd);
     console.log('Finish', arg);
+  }
+  for (const arg of toStart) {
+    console.log('Will start new', arg, cwd);
+    await startPM2Processes(arg, cwd);
+    console.log('Finish new', arg);
   }
   pm2.disconnect();
 }
@@ -136,14 +158,14 @@ pmx.initModule({
 
       const currentMd5 = getCurrentMd5(param, apps, requireBlacklist);
 
-      const [toRestart, toStop] = checkMd5(apps, currentMd5, md5Path);
+      const [toRestart, toStop, toStart] = checkMd5(apps, currentMd5, md5Path);
 
       if (!fileExists(md5Path)) {
         console.log('File not exists', md5Path);
-        await removeAndStartServices(toRestart, param);
+        await removeAndStartServices(toRestart, toStop, toStart, param);
       } else {
         console.log('File exists', md5Path);
-        await managePM2Processes(toRestart, toStop, param);
+        await managePM2Processes(toRestart, toStop, toStart, param);
       }
 
       putFileContent(md5Path, JSON.stringify(currentMd5));
