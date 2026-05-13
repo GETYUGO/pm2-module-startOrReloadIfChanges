@@ -19,7 +19,7 @@ const arrayDiff = (arr1, arr2, compareFct) => [
  */
 const checkMd5 = (apps, currentMd5, md5Path) => {
   if (!fileExists(md5Path)) {
-    return [apps, []];
+    return [apps, [], []];
   }
   const lastMd5 = getFileJson(md5Path);
   const [olds, news] = arrayDiff(
