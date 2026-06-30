@@ -161,12 +161,16 @@ pmx.initModule({
   }
 
   pmx.action('reloads', async (param, reply) => {
+    console.log('Reloads action called with param:', param);
     try {
       const allRestarted = [];
       const allStopped = [];
       const allStarted = [];
       const params = loadParams(param);
       const ecosystemPaths = getEcosystemPaths(params.appPath, params.allowSingleton);
+
+      console.log('Params:', params);
+      console.log('Ecosystem paths:', ecosystemPaths);
 
       for (const ecosystemPath of ecosystemPaths) {
         const md5Path = getMd5Path(ecosystemPath);
@@ -178,6 +182,8 @@ pmx.initModule({
 
         const [toRestart, toStop, toStart] = checkMd5(apps, currentMd5, md5Path);
 
+        console.log('Check finish', { toRestart: toRestart.length, toStop: toStop.length, toStart: toStart.length, md5Path, currentMd5 });
+
         if (!fileExists(md5Path)) {
           console.log('File not exists', md5Path);
           await removeAndStartServices(toRestart, toStop, toStart, params.appPath);
@@ -185,6 +191,8 @@ pmx.initModule({
           console.log('File exists', md5Path);
           await managePM2Processes(toRestart, toStop, toStart, params.appPath);
         }
+
+        console.log('Manage finish');
 
         putFileContent(md5Path, JSON.stringify(currentMd5));
         allRestarted.push(...toRestart);
