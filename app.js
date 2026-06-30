@@ -92,6 +92,10 @@ const managePM2Processes = async (toRestart, toStop, toStart, cwd = undefined) =
   pm2.disconnect();
 }
 
+const loadParams = (param) => {
+  return JSON.parse(param);
+}
+
 const removeAndStartServices = async (toRestart, toStop, toStart, cwd = undefined) => {
   await connectToPM2();
   for (const arg of toStop) {
@@ -141,8 +145,16 @@ pmx.initModule({
   const pm2Path = `${process.env.HOME}/.pm2`;
   const startOrReloadPath = `${pm2Path}/start_or_reload`
 
-  const getMd5Path = (param) => `${startOrReloadPath}/${toMd5(param)}.json`;
-  const getEcosystemPath = (param) => `${param}/${conf.ecosystem_file}`;
+  const getMd5Path = (ecosystemPath) => `${startOrReloadPath}/${toMd5(ecosystemPath)}.json`;
+  const getEcosystemPaths = (appPath, allowSingleton = false) => {
+    const paths = [
+      `${appPath}/${conf.replicated_ecosystem_file}`
+    ]
+    if (allowSingleton) {
+      paths.push(`${appPath}/${conf.singleton_ecosystem_file}`);
+    }
+    return paths;
+  };
 
   if (!fileExists(startOrReloadPath)) {
     makeFolder(startOrReloadPath);
@@ -150,29 +162,41 @@ pmx.initModule({
 
   pmx.action('reloads', async (param, reply) => {
     try {
-      const md5Path = getMd5Path(param);
-      const ecosystemPath = getEcosystemPath(param);
-      const ecosystem = JSON.parse(getFileContent(ecosystemPath));
-      const { apps, startOrReloadConfig } = ecosystem;
-      const requireBlacklist = startOrReloadConfig?.requireBlacklist || [];
+      const allRestarted = [];
+      const allStopped = [];
+      const allStarted = [];
+      const params = loadParams(param);
+      const ecosystemPaths = getEcosystemPaths(params.appPath, params.allowSingleton);
 
-      const currentMd5 = getCurrentMd5(param, apps, requireBlacklist);
+      for (const ecosystemPath of ecosystemPaths) {
+        const md5Path = getMd5Path(ecosystemPath);
+        const ecosystem = JSON.parse(getFileContent(ecosystemPath));
+        const { apps, startOrReloadConfig } = ecosystem;
+        const requireBlacklist = startOrReloadConfig?.requireBlacklist || [];
 
-      const [toRestart, toStop, toStart] = checkMd5(apps, currentMd5, md5Path);
+        const currentMd5 = getCurrentMd5(params.appPath, apps, requireBlacklist);
 
-      if (!fileExists(md5Path)) {
-        console.log('File not exists', md5Path);
-        await removeAndStartServices(toRestart, toStop, toStart, param);
-      } else {
-        console.log('File exists', md5Path);
-        await managePM2Processes(toRestart, toStop, toStart, param);
+        const [toRestart, toStop, toStart] = checkMd5(apps, currentMd5, md5Path);
+
+        if (!fileExists(md5Path)) {
+          console.log('File not exists', md5Path);
+          await removeAndStartServices(toRestart, toStop, toStart, params.appPath);
+        } else {
+          console.log('File exists', md5Path);
+          await managePM2Processes(toRestart, toStop, toStart, params.appPath);
+        }
+
+        putFileContent(md5Path, JSON.stringify(currentMd5));
+        allRestarted.push(...toRestart);
+        allStopped.push(...toStop);
+        allStarted.push(...toStart);
       }
 
-      putFileContent(md5Path, JSON.stringify(currentMd5));
-      putFileContent(`${param}/${conf.to_restart_file}`, JSON.stringify(toRestart));
-      putFileContent(`${param}/${conf.to_stop_file}`, JSON.stringify(toStop));
+      putFileContent(`${params.appPath}/${conf.to_restart_file}`, JSON.stringify(allRestarted));
+      putFileContent(`${params.appPath}/${conf.to_stop_file}`, JSON.stringify(allStopped));
+      putFileContent(`${params.appPath}/${conf.to_start_file}`, JSON.stringify(allStarted));
 
-      return reply(`Start ${toRestart.map(a => a.name).join(', ')}. Stop ${toStop.map(a => a.name).join(', ')}`);
+      return reply(`Restart ${allRestarted.map(a => a.name).join(', ')}. Stop ${allStopped.map(a => a.name).join(', ')}. Start ${allStarted.map(a => a.name).join(', ')}`);
     } catch (e) {
       console.log(e);
       return reply('ERROR');
@@ -181,14 +205,18 @@ pmx.initModule({
 
   pmx.action('refresh', async (param, reply) => {
     try {
-      const md5Path = getMd5Path(param);
-      const ecosystemPath = getEcosystemPath(param);
-      const ecosystem = JSON.parse(getFileContent(ecosystemPath).replace('module.exports = ', ''));
-      const requireBlacklist = ecosystem.startOrReloadConfig?.requireBlacklist || [];
+      const params = loadParams(param);
+      const ecosystemPaths = getEcosystemPaths(params.appPath, params.allowSingleton);
 
-      const currentMd5 = getCurrentMd5(param, ecosystem.apps, requireBlacklist);
+      for (const ecosystemPath of ecosystemPaths) {
+        const md5Path = getMd5Path(ecosystemPath);
+        const ecosystem = JSON.parse(getFileContent(ecosystemPath).replace('module.exports = ', ''));
+        const requireBlacklist = ecosystem.startOrReloadConfig?.requireBlacklist || [];
 
-      putFileContent(md5Path, JSON.stringify(currentMd5));
+        const currentMd5 = getCurrentMd5(params.appPath, ecosystem.apps, requireBlacklist);
+
+        putFileContent(md5Path, JSON.stringify(currentMd5));
+      }
 
       return reply(`Successfully refreshed checksums`);
     } catch (e) {

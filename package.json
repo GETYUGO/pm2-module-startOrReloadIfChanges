@@ -1,12 +1,12 @@
 {
   "name": "startOrReloadIfChanges",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "PM2 Module for restart proccesses that have changed",
   "main": "app.js",
   "dependencies": {
     "md5": "^2.3.0",
-    "pm2": "^5.4.2",
-    "pmx": "^1.6.7",
+    "pm2": "^5.4.3",
+    "pmx": "^1.6.8",
     "uglify-js": "^3.19.3"
   },
   "repository": {
@@ -16,8 +16,11 @@
   "config": {
     "services_md5_file": "services_md5.json",
     "ecosystem_file": "ecosystem.config.json",
+    "singleton_ecosystem_file": "ecosystem.singleton.json",
+    "replicated_ecosystem_file": "ecosystem.replicated.json",
     "to_restart_file": "ecosystem.restart.json",
-    "to_stop_file": "ecosystem.stop.json"
+    "to_stop_file": "ecosystem.stop.json",
+    "to_start_file": "ecosystem.start.json"
   },
   "apps": [
     {
