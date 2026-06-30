@@ -73,7 +73,6 @@ const killPM2Process = (toKill) => new Promise((resolve, reject) => {
 });
 
 const managePM2Processes = async (toRestart, toStop, toStart, cwd = undefined) => {
-  await connectToPM2();
   if (toStop.length > 0) {
     for (const arg of toStop) {
       await deletePM2Process(arg.name);
@@ -89,7 +88,6 @@ const managePM2Processes = async (toRestart, toStop, toStart, cwd = undefined) =
       await startPM2Processes(arg, cwd)
     }
   }
-  pm2.disconnect();
 }
 
 const loadParams = (param) => {
@@ -97,7 +95,6 @@ const loadParams = (param) => {
 }
 
 const removeAndStartServices = async (toRestart, toStop, toStart, cwd = undefined) => {
-  await connectToPM2();
   for (const arg of toStop) {
     console.log('Will stop', arg, cwd);
     await deletePM2Process(arg.name).catch(() => { });
@@ -114,7 +111,6 @@ const removeAndStartServices = async (toRestart, toStop, toStart, cwd = undefine
     await startPM2Processes(arg, cwd);
     console.log('Finish new', arg);
   }
-  pm2.disconnect();
 }
 
 pmx.initModule({
@@ -172,32 +168,38 @@ pmx.initModule({
       console.log('Params:', params);
       console.log('Ecosystem paths:', ecosystemPaths);
 
-      for (const ecosystemPath of ecosystemPaths) {
-        const md5Path = getMd5Path(ecosystemPath);
-        const ecosystem = JSON.parse(getFileContent(ecosystemPath));
-        const { apps, startOrReloadConfig } = ecosystem;
-        const requireBlacklist = startOrReloadConfig?.requireBlacklist || [];
+      try {
+        await connectToPM2();
 
-        const currentMd5 = getCurrentMd5(params.appPath, apps, requireBlacklist);
+        for (const ecosystemPath of ecosystemPaths) {
+          const md5Path = getMd5Path(ecosystemPath);
+          const ecosystem = JSON.parse(getFileContent(ecosystemPath));
+          const { apps, startOrReloadConfig } = ecosystem;
+          const requireBlacklist = startOrReloadConfig?.requireBlacklist || [];
 
-        const [toRestart, toStop, toStart] = checkMd5(apps, currentMd5, md5Path);
+          const currentMd5 = getCurrentMd5(params.appPath, apps, requireBlacklist);
 
-        console.log('Check finish', { toRestart: toRestart.length, toStop: toStop.length, toStart: toStart.length, md5Path, currentMd5 });
+          const [toRestart, toStop, toStart] = checkMd5(apps, currentMd5, md5Path);
 
-        if (!fileExists(md5Path)) {
-          console.log('File not exists', md5Path);
-          await removeAndStartServices(toRestart, toStop, toStart, params.appPath);
-        } else {
-          console.log('File exists', md5Path);
-          await managePM2Processes(toRestart, toStop, toStart, params.appPath);
+          console.log('Check finish', { toRestart: toRestart.length, toStop: toStop.length, toStart: toStart.length, md5Path, currentMd5 });
+
+          if (!fileExists(md5Path)) {
+            console.log('File not exists', md5Path);
+            await removeAndStartServices(toRestart, toStop, toStart, params.appPath);
+          } else {
+            console.log('File exists', md5Path);
+            await managePM2Processes(toRestart, toStop, toStart, params.appPath);
+          }
+
+          console.log('Manage finish');
+
+          putFileContent(md5Path, JSON.stringify(currentMd5));
+          allRestarted.push(...toRestart);
+          allStopped.push(...toStop);
+          allStarted.push(...toStart);
         }
-
-        console.log('Manage finish');
-
-        putFileContent(md5Path, JSON.stringify(currentMd5));
-        allRestarted.push(...toRestart);
-        allStopped.push(...toStop);
-        allStarted.push(...toStart);
+      } finally {
+        pm2.disconnect();
       }
 
       putFileContent(`${params.appPath}/${conf.to_restart_file}`, JSON.stringify(allRestarted));
