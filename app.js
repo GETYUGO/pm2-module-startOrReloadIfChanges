@@ -91,7 +91,16 @@ const managePM2Processes = async (toRestart, toStop, toStart, cwd = undefined) =
 }
 
 const loadParams = (param) => {
-  return JSON.parse(param);
+  try {
+    const parsedPrams = JSON.parse(param);
+
+    return parsedPrams;
+  }
+  catch (e) {
+    return {
+      appPath: param,
+    }
+  }
 }
 
 const removeAndStartServices = async (toRestart, toStop, toStart, cwd = undefined) => {
@@ -142,14 +151,19 @@ pmx.initModule({
   const startOrReloadPath = `${pm2Path}/start_or_reload`
 
   const getMd5Path = (ecosystemPath) => `${startOrReloadPath}/${toMd5(ecosystemPath)}.json`;
+
   const getEcosystemPaths = (appPath, allowSingleton = false) => {
-    const paths = [
-      `${appPath}/${conf.replicated_ecosystem_file}`
-    ]
-    if (allowSingleton) {
-      paths.push(`${appPath}/${conf.singleton_ecosystem_file}`);
+    if (fileExists(`${appPath}/${conf.replicated_ecosystem_file}`)) {
+      const paths = [
+        `${appPath}/${conf.replicated_ecosystem_file}`
+      ]
+      if (allowSingleton) {
+        paths.push(`${appPath}/${conf.singleton_ecosystem_file}`);
+      }
+      return paths;
+    } else {
+      return [`${appPath}/${conf.ecosystem_file}`];
     }
-    return paths;
   };
 
   if (!fileExists(startOrReloadPath)) {
