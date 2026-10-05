@@ -54,6 +54,15 @@ const getModuleMainPath = (nodeModulesPath, moduleName) => {
   return modulePath + JSON.parse(packageContent).main;
 };
 
+const getSiblingConfig = (filePath) => {
+  const configPath = filePath.replace(/\.(js|json)$/, '') + '.config.json';
+
+  if (configPath === filePath || !fileExists(configPath)) {
+    return {};
+  }
+  return { [getFileName(configPath)]: getFileContent(configPath) };
+};
+
 const getFileAndRequirements = (filePath, nodeModulesPath, requireBlacklist, depth = 0) => {
   const fileContent = getFileContent(filePath);
 
@@ -61,6 +70,7 @@ const getFileAndRequirements = (filePath, nodeModulesPath, requireBlacklist, dep
     console.error('TOO MUCH DEPTH:', filePath);
     return {
       [getFileName(filePath)]: uglify.minify(fileContent).code,
+      ...getSiblingConfig(filePath),
     }
   }
   const requirements = parseRequires(fileContent, requireBlacklist);
@@ -93,6 +103,7 @@ const getFileAndRequirements = (filePath, nodeModulesPath, requireBlacklist, dep
     },
     {
       [getFileName(filePath)]: uglify.minify(fileContent).code,
+      ...getSiblingConfig(filePath),
     },
   );
 }

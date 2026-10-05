@@ -28,5 +28,8 @@
       "script": "app.js"
     }
   ],
-  "author": "Alexis \"Enchiladas\" Craye"
+  "author": "Alexis \"Enchiladas\" Craye",
+  "scripts": {
+    "test": "node --test \"test/**/*.test.js\""
+  }
 }
